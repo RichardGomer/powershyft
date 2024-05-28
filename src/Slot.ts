@@ -8,6 +8,8 @@ class Slot {
     private startTime: Date;
     private flows: Flow[];
 
+    private duration : number = 600000; // Duration of the slot, in milliseconds (10 minutes)
+
     constructor(startTime: Date) {
 
         // Check if startTime is not on a multiple of ten minutes
@@ -16,6 +18,18 @@ class Slot {
         }
 
         this.startTime = startTime;
+    }
+
+    public getStartTime() : Date {
+        return this.startTime;
+    }
+
+    public getEndTime() : Date {
+        return new Date(this.startTime.getTime() + this.duration);
+    }
+
+    public getDuration() : number {
+        return this.duration;
     }
 
     private nextSlot: Slot | null;
@@ -53,7 +67,7 @@ class Slot {
      */
     public getBalance(appliance: Appliance) : number {
         return this.getFlowsByAppliance(appliance).reduce((balance: number, flow: Flow) => {
-            return balance + (flow.from === appliance ? flow.power : flow.power * -1);
+            return balance + (flow.from === appliance ? flow.energy : flow.energy * -1);
         }, 0);
     }
 

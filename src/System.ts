@@ -1,6 +1,8 @@
 import PowerSeries from './PowerSeries';
 import Appliance from './Appliance';
 import Slot from './Slot';
+import Flow from './Flow';
+import LocalGrid from './LocalGrid';
 
 /**
  * Represents a power system - i.e. a set of connected Appliances
@@ -8,6 +10,10 @@ import Slot from './Slot';
 class System {
     private appliances: Appliance[];
     private storage: Storage[];
+
+    public localGrid = new LocalGrid();
+
+    public stepTime : number = 600; // Step time, in seconds
 
     constructor() {
         this.appliances = [];
@@ -30,39 +36,47 @@ class System {
     }
 
     /**
-     * Simulate a single ten minute step from the given time
-     * @param startTime 
-     * @returns 
+     * Simulate a single step from the given time
+     * Flows are added to the given slot
      */
-    stepAppliances(startTime: Date): number {
-
-
+    stepAppliances(slot: Slot): void {
 
         // Calculate the end time by adding 10 minutes to the start time
-        const endTime = new Date(startTime.getTime() + 10 * 60 * 1000);
+        const endTime = slot.getEndTime();
 
         // Create an array to store the power values for each equipment
         const powerValues: number[] = [];
 
-        var slot = new Slot(startTime);
-
         // Iterate over each equipment
         for (const equipment of this.appliances) {
             // Calculate the power consumption or production for the given time period
-            const power = equipment.calculatePower(startTime, endTime);
+            var ps = equipment.calculateEnergy();
+            var clipped = ps.clip(slot.getStartTime(), slot.getEndTime());
+
+            // Convert the clipped power series to energy, for the slot
+            // TODO
+            var periods = clipped.getPeriods();
+            var energy = 0;
+            for(var p of periods) {
+                energy += p.power * ((p.endTime - p.startTime) / 3600000);
+            }
 
             // Add the power flow to the system
-            
+            slot.addFlow(new Flow(this.localGrid, equipment, energy));
         }
-
-        // Calculate the net power consumption by summing up the power values
-        const netPowerConsumption = powerValues.reduce((sum, power) => sum + power, 0);
-
-        return netPowerConsumption;
     }
 
-    stepStorage(startTime: Date) {
+    /**
+     * Apply storage to the given slot; i.e. generate power flows to/from storage appliances
+     * @param slot
+     */
+    stepStorage(slot: Slot) {
         
+        // We find the total surplus / deficit on the local grid
+
+        // Then apply it to the storage devices...
+        // How model 
+
     }
 
     /**
@@ -71,18 +85,20 @@ class System {
      * @param steps 
      * @returns 
      */
-    simulate(startTime: Date, steps: number): PowerSeries {
+    simulate(startTime: Date, steps: number): Slot[] {
         let currentTime = new Date(startTime);
-        const powerSeries: PowerSeries = new PowerSeries();
+
+        var slot : Slot = new Slot(currentTime);
+        var slots : Array<Slot> = [];
+
         for (let i = 0; i < steps; i++) {
-            const netPowerConsumption = this.stepAppliances(currentTime);
-            powerSeries.addPeriod(
-                currentTime.getTime(),
-                netPowerConsumption
-            );
-            currentTime = new Date(currentTime.getTime() + 10 * 60 * 1000);
+            
+
+            slots.push(slot);
+            slot = slot.getNextSlot();
         }
-        return powerSeries;
+        
+        return slots;
     }
 
 }

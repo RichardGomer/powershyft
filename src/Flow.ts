@@ -1,4 +1,4 @@
-// Represents a flow of power, occurring in a given time slot, between two Appliances
+// Represents a flow of energy, occurring in a given time slot, between two Appliances
 
 import Appliance from "./Appliance";
 
@@ -6,21 +6,21 @@ class Flow {
 
     public from: Appliance;
     public to: Appliance;
-    public power: number;
+    public energy: number; // Energy flow in KWh
 
-    constructor(from: Appliance, to: Appliance, power: number) {
+    constructor(from: Appliance, to: Appliance, energy: number) {
 
         // Normalise the flow to be positive
-        if(power < 0) {
+        if(energy < 0) {
             var x = from;
             from = to;
             to = x;
-            power *= -1;
+            energy *= -1;
         }
 
         this.from = from;
         this.to = to;
-        this.power = power;
+        this.energy = energy;
 
     }
 
